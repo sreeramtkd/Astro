@@ -1,0 +1,7 @@
+Setting Up LCD 3.5" Display
+
+1). Enable the SPI interface via sudo raspi-config
+2). git clone https://github.com/goodtft/LCD-show
+3). cd  LCD-show/
+4). sudo ./LCD35-show 
+5). sudo reboot
