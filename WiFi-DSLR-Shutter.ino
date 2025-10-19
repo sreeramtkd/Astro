@@ -3,6 +3,7 @@
 //This controller uses an ESP8266 module as a web server and creates a local hotspot that allows you to connect from your mobile,tablet, or computer to control your DSLR remotely. 
 //It includes functionality similar to that of a professional intervalometer,enabling full control over exposure time, delay between shots, and the number of shots. 
 //Refer to your camera’s trigger connector pinout and connect it to GPIO #2 through a 1 kΩ resistor.
+// Once powered on you will see a HotSpot named "Intervelometer", connect to it and open a broweser and point it to http://192.168.4.1
 
 #include <ESP8266WiFi.h>
 #include <ESPAsyncTCP.h>
