@@ -49,7 +49,7 @@ const char index_html[] PROGMEM = R"rawliteral(
          oninput="showFormatted(this.value, 'delayTxt');setDelay(this.value)">
 
   <p>Shot Count: <span id="maxShotTxt">0 (∞)</span></p>
-  <input type="range" min="0" max="100000" value="0" class="slider" id="maxShotSlider"
+  <input type="range" min="0" max="250" value="0" class="slider" id="maxShotSlider"
          oninput="showCount(this.value, 'maxShotTxt');setMaxShots(this.value)">
 
   <p>
