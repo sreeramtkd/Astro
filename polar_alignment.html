@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Polar Alignment Tool</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Orbitron:wght@400;500;700;900&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0a0e1a;
+    --accent: #00e5ff;
+    --green: #00ff88;
+    --text: #c0d0e8;
+    --text-dim: #5a6a8a;
+    --danger: #ff4444;
+    --warn: #ffaa00;
+    --polaris: #ffe066;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  .app {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px;
+    gap: 10px;
+    max-width: 420px;
+    margin: 0 auto;
+  }
+
+  header { text-align: center; width: 100%; }
+
+  header h1 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: var(--accent);
+    text-transform: uppercase;
+    text-shadow: 0 0 20px rgba(0,229,255,0.3);
+  }
+
+  header .subtitle {
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    margin-top: 2px;
+  }
+
+  .warn-banner {
+    background: linear-gradient(135deg, #3a1a1a, #2a1a1a);
+    border: 1px solid #6a3a3a;
+    border-radius: 10px;
+    padding: 12px 16px;
+    width: 100%;
+    display: none;
+    font-size: 0.7rem;
+    line-height: 1.5;
+    color: #ff8888;
+  }
+  .warn-banner.show { display: block; }
+  .warn-banner code {
+    background: rgba(255,255,255,0.08);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 0.65rem;
+  }
+
+  .permission-banner {
+    background: linear-gradient(135deg, #1a1a3a, #2a1a3a);
+    border: 1px solid #4a3a6a;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    width: 100%;
+    display: none;
+  }
+  .permission-banner.show { display: block; }
+
+  .permission-banner p {
+    font-size: 0.75rem;
+    color: var(--text);
+    margin-bottom: 12px;
+    line-height: 1.5;
+  }
+
+  .permission-banner button {
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    padding: 10px 28px;
+    border-radius: 8px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 1px;
+  }
+
+  .lat-section {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .lat-section label {
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .lat-section input {
+    width: 80px;
+    background: #111828;
+    border: 1px solid #2a3a5a;
+    border-radius: 6px;
+    color: var(--accent);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    padding: 4px 8px;
+    text-align: center;
+  }
+
+  .lat-section .unit { font-size: 0.7rem; color: var(--text-dim); }
+
+  .lat-section .auto-btn {
+    background: none;
+    border: 1px solid #2a3a5a;
+    color: var(--accent);
+    font-size: 0.6rem;
+    padding: 3px 8px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .scope-container { position: relative; width: 300px; height: 300px; }
+  .scope-canvas { width: 100%; height: 100%; }
+
+  .status-bar {
+    width: 100%;
+    text-align: center;
+    padding: 8px;
+    border-radius: 10px;
+    border: 1px solid #1a2a4a;
+    background: #0d1225;
+  }
+
+  .status-bar .status-text {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 2px;
+  }
+
+  .status-bar .error-deg {
+    font-size: 1.4rem;
+    font-weight: 700;
+    font-family: 'Orbitron', sans-serif;
+    margin-top: 2px;
+  }
+
+  .status-bar .direction-hint {
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    margin-top: 4px;
+    line-height: 1.4;
+  }
+
+  .levels-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .level-card {
+    background: #0d1225;
+    border: 1px solid #1a2a4a;
+    border-radius: 10px;
+    padding: 10px 6px;
+    text-align: center;
+  }
+
+  .level-card .axis-label {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    margin-bottom: 6px;
+  }
+
+  .level-bar-container {
+    position: relative;
+    height: 14px;
+    background: #111828;
+    border-radius: 7px;
+    overflow: hidden;
+    margin-bottom: 6px;
+  }
+
+  .level-bar-center {
+    position: absolute;
+    left: 50%;
+    top: 2px;
+    bottom: 2px;
+    width: 2px;
+    background: var(--text-dim);
+    transform: translateX(-50%);
+    opacity: 0.4;
+  }
+
+  .level-bar-bubble {
+    position: absolute;
+    top: 2px;
+    width: 18px;
+    height: 10px;
+    border-radius: 5px;
+    transition: left 0.15s ease-out, background 0.3s;
+  }
+
+  .level-value { font-size: 0.85rem; font-weight: 500; }
+
+  .compass-section {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #0d1225;
+    border: 1px solid #1a2a4a;
+    border-radius: 10px;
+    padding: 10px 16px;
+  }
+
+  .compass-section .label {
+    font-size: 0.6rem;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .compass-section .heading-val {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  .compass-section .cardinal {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--polaris);
+  }
+
+  .raw-data {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+    opacity: 0.6;
+  }
+
+  .raw-data .datum {
+    text-align: center;
+    font-size: 0.55rem;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+  }
+
+  .raw-data .datum span {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--text);
+    font-weight: 500;
+    margin-top: 1px;
+  }
+
+  .sensor-info {
+    text-align: center;
+    font-size: 0.55rem;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+  }
+
+  .diag-toggle {
+    background: none;
+    border: 1px solid #1a2a4a;
+    color: var(--text-dim);
+    font-size: 0.6rem;
+    padding: 4px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 1px;
+  }
+
+  .diag-panel {
+    width: 100%;
+    background: #080c18;
+    border: 1px solid #1a2a4a;
+    border-radius: 8px;
+    padding: 10px;
+    display: none;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+  .diag-panel.show { display: block; }
+
+  .diag-panel .log-line {
+    font-size: 0.55rem;
+    color: var(--text-dim);
+    line-height: 1.6;
+    word-break: break-all;
+  }
+  .diag-panel .log-line.ok { color: var(--green); }
+  .diag-panel .log-line.err { color: var(--danger); }
+  .diag-panel .log-line.warn { color: var(--warn); }
+
+  .note {
+    font-size: 0.55rem;
+    color: var(--text-dim);
+    text-align: center;
+    line-height: 1.5;
+    max-width: 320px;
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header>
+    <h1>Polar Align</h1>
+    <div class="subtitle">Daytime Polar Alignment Tool</div>
+  </header>
+
+  <div class="warn-banner" id="httpsWarn">
+    ⚠ Page not served over <strong>HTTPS</strong>. Chrome blocks sensor access on insecure origins.<br>
+    Fix: serve via <code>https://</code> or set <code>chrome://flags → #unsafely-treat-insecure-origin-as-secure</code> with your URL.
+  </div>
+
+  <div class="permission-banner show" id="permBanner">
+    <p>This app reads your device's gyroscope, accelerometer &amp; compass.<br>Tap below to grant sensor access.</p>
+    <button onclick="requestPermission()">Enable Sensors</button>
+  </div>
+
+  <div class="lat-section">
+    <label>Latitude</label>
+    <input type="number" id="latInput" value="13.08" step="0.01" min="-90" max="90">
+    <span class="unit">°N</span>
+    <button class="auto-btn" onclick="autoLat()">GPS</button>
+  </div>
+
+  <div class="scope-container">
+    <canvas class="scope-canvas" id="scopeCanvas" width="600" height="600"></canvas>
+  </div>
+
+  <div class="status-bar" id="statusBar">
+    <div class="status-text" id="statusText">WAITING FOR SENSORS</div>
+    <div class="error-deg" id="errorDeg">--°</div>
+    <div class="direction-hint" id="dirHint">Point your phone's top edge along the polar axis</div>
+  </div>
+
+  <div class="levels-grid">
+    <div class="level-card">
+      <div class="axis-label">PITCH (X)</div>
+      <div class="level-bar-container">
+        <div class="level-bar-center"></div>
+        <div class="level-bar-bubble" id="bubbleX"></div>
+      </div>
+      <div class="level-value" id="valX">0.0°</div>
+    </div>
+    <div class="level-card">
+      <div class="axis-label">ROLL (Y)</div>
+      <div class="level-bar-container">
+        <div class="level-bar-center"></div>
+        <div class="level-bar-bubble" id="bubbleY"></div>
+      </div>
+      <div class="level-value" id="valY">0.0°</div>
+    </div>
+    <div class="level-card">
+      <div class="axis-label">YAW (Z)</div>
+      <div class="level-bar-container">
+        <div class="level-bar-center"></div>
+        <div class="level-bar-bubble" id="bubbleZ"></div>
+      </div>
+      <div class="level-value" id="valZ">0.0°</div>
+    </div>
+  </div>
+
+  <div class="compass-section">
+    <div>
+      <div class="label">Compass Heading</div>
+      <div class="heading-val" id="headingVal">---°</div>
+    </div>
+    <div class="cardinal" id="cardinalDir">--</div>
+    <div>
+      <div class="label">Target Alt</div>
+      <div class="heading-val" style="color: var(--polaris)" id="targetHeading">Alt 13.1°</div>
+    </div>
+  </div>
+
+  <div class="raw-data">
+    <div class="datum">ALPHA<span id="rawA">--</span></div>
+    <div class="datum">BETA<span id="rawB">--</span></div>
+    <div class="datum">GAMMA<span id="rawG">--</span></div>
+  </div>
+
+  <div class="sensor-info" id="sensorSrc">SENSOR: --</div>
+
+  <button class="diag-toggle" onclick="document.getElementById('diagPanel').classList.toggle('show')">Diagnostics ▼</button>
+  <div class="diag-panel" id="diagPanel"></div>
+
+  <p class="note">
+    Place phone flat on equatorial mount's polar axis.<br>
+    Polaris altitude = your latitude. Azimuth = true North.<br>
+    Wave phone in figure-8 to calibrate compass.
+  </p>
+</div>
+
+<script>
+  // ── Diagnostics ──
+  const diagPanel = document.getElementById('diagPanel');
+  function log(msg, cls) {
+    const d = document.createElement('div');
+    d.className = 'log-line ' + (cls || '');
+    d.textContent = '[' + new Date().toLocaleTimeString() + '] ' + msg;
+    diagPanel.prepend(d);
+    while (diagPanel.children.length > 60) diagPanel.removeChild(diagPanel.lastChild);
+  }
+
+  // ── HTTPS check ──
+  const isSecure = window.isSecureContext;
+  if (!isSecure) {
+    document.getElementById('httpsWarn').classList.add('show');
+    log('NOT a secure context (' + location.protocol + ') — sensors WILL be blocked', 'err');
+  } else {
+    log('Secure context: YES', 'ok');
+  }
+  log('UA: ' + navigator.userAgent.substring(0, 80));
+
+  // ── Feature detection logging ──
+  log('DeviceOrientationEvent: ' + (typeof DeviceOrientationEvent !== 'undefined' ? 'YES' : 'NO'));
+  log('DeviceOrientationEvent.requestPermission: ' + (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function' ? 'YES (iOS)' : 'NO'));
+  log('ondeviceorientationabsolute: ' + ('ondeviceorientationabsolute' in window ? 'YES' : 'NO'));
+  log('AbsoluteOrientationSensor: ' + ('AbsoluteOrientationSensor' in window ? 'YES' : 'NO'));
+  log('Accelerometer: ' + ('Accelerometer' in window ? 'YES' : 'NO'));
+  log('Gyroscope: ' + ('Gyroscope' in window ? 'YES' : 'NO'));
+
+  // ── State ──
+  let alpha = null, beta = null, gamma = null;
+  let smoothAlpha = 0, smoothBeta = 0, smoothGamma = 0;
+  const SMOOTH = 0.15;
+  let sensorActive = false;
+  let sensorSource = 'none';
+  let eventCount = 0;
+  let orientationBound = false;
+
+  function getTargetAltitude() {
+    return parseFloat(document.getElementById('latInput').value) || 13.08;
+  }
+
+  // ── GPS ──
+  function autoLat() {
+    if (!navigator.geolocation) { log('Geolocation unavailable', 'err'); return; }
+    log('Requesting GPS...');
+    navigator.geolocation.getCurrentPosition(
+      p => { document.getElementById('latInput').value = p.coords.latitude.toFixed(2); log('GPS lat: ' + p.coords.latitude.toFixed(4), 'ok'); },
+      e => log('GPS error: ' + e.message, 'err'),
+      { enableHighAccuracy: true }
+    );
+  }
+
+  // ── Permission ──
+  async function requestPermission() {
+    log('User tapped Enable Sensors');
+
+    // iOS path
+    if (typeof DeviceOrientationEvent !== 'undefined' &&
+        typeof DeviceOrientationEvent.requestPermission === 'function') {
+      log('iOS: requesting permission...');
+      try {
+        const p = await DeviceOrientationEvent.requestPermission();
+        log('iOS permission result: ' + p, p === 'granted' ? 'ok' : 'err');
+        if (p !== 'granted') return;
+      } catch (e) {
+        log('iOS permission error: ' + e.message, 'err');
+        return;
+      }
+    }
+
+    // Also request DeviceMotionEvent permission on iOS if available
+    if (typeof DeviceMotionEvent !== 'undefined' &&
+        typeof DeviceMotionEvent.requestPermission === 'function') {
+      try {
+        await DeviceMotionEvent.requestPermission();
+      } catch(e) { /* ignore */ }
+    }
+
+    initSensors();
+  }
+
+  function initSensors() {
+    document.getElementById('permBanner').classList.remove('show');
+    if (orientationBound) return; // prevent double-binding
+    orientationBound = true;
+    log('Initializing sensors...');
+
+    let gotData = false;
+
+    // ── Strategy 1: AbsoluteOrientationSensor (Chrome 67+ on Android) ──
+    if ('AbsoluteOrientationSensor' in window) {
+      log('Trying AbsoluteOrientationSensor...');
+      try {
+        const sensor = new AbsoluteOrientationSensor({ frequency: 30, referenceFrame: 'device' });
+        sensor.addEventListener('reading', () => {
+          if (!gotData) { gotData = true; log('AbsoluteOrientationSensor delivering data', 'ok'); }
+          sensorSource = 'AbsoluteOrientationSensor';
+          const q = sensor.quaternion;
+          const e = quatToEuler(q[0], q[1], q[2], q[3]);
+          alpha = e.alpha; beta = e.beta; gamma = e.gamma;
+          eventCount++;
+          sensorActive = true;
+          processOrientation();
+        });
+        sensor.addEventListener('error', e => {
+          log('AbsoluteOrientationSensor error: ' + (e.error ? e.error.message : e), 'err');
+          if (!gotData) tryEventListeners();
+        });
+        sensor.start();
+        log('AbsoluteOrientationSensor.start() called');
+
+        setTimeout(() => {
+          if (!gotData) {
+            log('AbsoluteOrientationSensor: no readings after 2s — fallback', 'warn');
+            try { sensor.stop(); } catch(ex) {}
+            tryEventListeners();
+          }
+        }, 2000);
+        return;
+      } catch (e) {
+        log('AbsoluteOrientationSensor failed: ' + e.message, 'err');
+      }
+    }
+
+    tryEventListeners();
+  }
+
+  function tryEventListeners() {
+    log('Trying deviceorientation event listeners...');
+
+    let absReceived = false, relReceived = false;
+
+    // ── Strategy 2a: deviceorientationabsolute (Chrome Android compass) ──
+    function onAbsolute(e) {
+      if (!absReceived) {
+        absReceived = true;
+        log('deviceorientationabsolute: first event! alpha=' +
+            (e.alpha != null ? e.alpha.toFixed(1) : 'null') +
+            ' beta=' + (e.beta != null ? e.beta.toFixed(1) : 'null'), 'ok');
+        sensorSource = 'deviceorientationabsolute';
+        // We got absolute — remove the relative listener
+        window.removeEventListener('deviceorientation', onRelative, true);
+      }
+      eventCount++;
+      if (e.alpha != null) alpha = e.alpha;
+      if (e.beta != null) beta = e.beta;
+      if (e.gamma != null) gamma = e.gamma;
+      sensorActive = true;
+      processOrientation();
+    }
+
+    // ── Strategy 2b: deviceorientation (Safari, older browsers) ──
+    function onRelative(e) {
+      if (!relReceived) {
+        relReceived = true;
+        log('deviceorientation: first event! alpha=' +
+            (e.alpha != null ? e.alpha.toFixed(1) : 'null') +
+            ' absolute=' + e.absolute, e.alpha != null ? 'ok' : 'warn');
+        if (e.alpha == null) {
+          log('alpha is null — compass heading unavailable in this mode', 'warn');
+          log('Azimuth alignment will not work. Try Chrome flag or HTTPS.', 'warn');
+        }
+        sensorSource = e.absolute ? 'deviceorientation(absolute)' : 'deviceorientation(relative)';
+      }
+      eventCount++;
+      // webkitCompassHeading for Safari
+      if (e.alpha != null) {
+        alpha = e.alpha;
+      } else if (e.webkitCompassHeading != null) {
+        alpha = 360 - e.webkitCompassHeading; // webkit uses 0=N clockwise, we need same
+        if (!relReceived) log('Using webkitCompassHeading', 'ok');
+      }
+      if (e.beta != null) beta = e.beta;
+      if (e.gamma != null) gamma = e.gamma;
+      sensorActive = true;
+      processOrientation();
+    }
+
+    if ('ondeviceorientationabsolute' in window) {
+      log('Listening for deviceorientationabsolute', 'ok');
+      window.addEventListener('deviceorientationabsolute', onAbsolute, true);
+    } else {
+      log('deviceorientationabsolute not supported', 'warn');
+    }
+
+    log('Listening for deviceorientation');
+    window.addEventListener('deviceorientation', onRelative, true);
+
+    // Timeout — no events at all?
+    setTimeout(() => {
+      if (!absReceived && !relReceived) {
+        log('No orientation events after 3s!', 'err');
+        if (!isSecure) {
+          log('Likely cause: page is not HTTPS', 'err');
+        } else {
+          log('Possible: desktop browser, or sensors disabled in settings', 'warn');
+        }
+        log('Starting DEMO mode so you can see the UI', 'warn');
+        startDemo();
+      }
+    }, 3000);
+  }
+
+  // ── Quaternion → Euler ──
+  function quatToEuler(x, y, z, w) {
+    // ZXY rotation order for device orientation
+    const m11 = 1 - 2*(y*y + z*z);
+    const m12 = 2*(x*y - z*w);
+    const m13 = 2*(x*z + y*w);
+    const m21 = 2*(x*y + z*w);
+    const m22 = 1 - 2*(x*x + z*z);
+    const m23 = 2*(y*z - x*w);
+    const m31 = 2*(x*z - y*w);
+    const m32 = 2*(y*z + x*w);
+    const m33 = 1 - 2*(x*x + y*y);
+
+    const betaRad = Math.asin(clamp(m32, -1, 1));
+    let alphaRad, gammaRad;
+
+    if (Math.abs(m32) < 0.9999) {
+      alphaRad = Math.atan2(-m31, m33);
+      gammaRad = Math.atan2(-m12, m22);
+    } else {
+      alphaRad = 0;
+      gammaRad = Math.atan2(m21, m11);
+    }
+
+    return {
+      alpha: ((-alphaRad * 180 / Math.PI) + 360) % 360,
+      beta: betaRad * 180 / Math.PI,
+      gamma: gammaRad * 180 / Math.PI
+    };
+  }
+
+  // ── Demo ──
+  function startDemo() {
+    document.getElementById('permBanner').classList.remove('show');
+    sensorActive = true;
+    sensorSource = 'DEMO';
+    let t = 0;
+    setInterval(() => {
+      t += 0.02;
+      alpha = (360 + 5 * Math.sin(t * 0.3)) % 360;
+      beta = 13.08 + 3 * Math.sin(t * 0.5) + 1.5 * Math.cos(t * 0.7);
+      gamma = 2 * Math.sin(t * 0.4);
+      eventCount++;
+      processOrientation();
+    }, 50);
+  }
+
+  // ── Processing ──
+  function processOrientation() {
+    if (alpha === null) return;
+    smoothAlpha = lerpAngle(smoothAlpha, alpha, SMOOTH);
+    smoothBeta = lerp(smoothBeta, beta, SMOOTH);
+    smoothGamma = lerp(smoothGamma, gamma, SMOOTH);
+  }
+
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  function lerpAngle(a, b, t) {
+    let d = b - a;
+    while (d > 180) d -= 360;
+    while (d < -180) d += 360;
+    let r = a + d * t;
+    return ((r % 360) + 360) % 360;
+  }
+  function clamp(v, mn, mx) { return Math.max(mn, Math.min(mx, v)); }
+  function getCardinal(deg) {
+    const d = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+    return d[Math.round(deg / 22.5) % 16];
+  }
+
+  // ── Canvas ──
+  const canvas = document.getElementById('scopeCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = 600, H = 600, CX = 300, CY = 300;
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    const targetAlt = getTargetAltitude();
+
+    // BG
+    const bg = ctx.createRadialGradient(CX, CY, 0, CX, CY, 280);
+    bg.addColorStop(0, '#0f1a30'); bg.addColorStop(1, '#080c18');
+    ctx.fillStyle = bg;
+    ctx.beginPath(); ctx.arc(CX, CY, 280, 0, Math.PI*2); ctx.fill();
+
+    // Rings
+    const maxDeg = 25, sc = 240 / maxDeg;
+    for (let d = 5; d <= maxDeg; d += 5) {
+      const r = d * sc;
+      ctx.beginPath(); ctx.arc(CX, CY, r, 0, Math.PI*2);
+      ctx.strokeStyle = d === 5 ? 'rgba(0,255,136,0.2)' : 'rgba(26,39,68,0.7)';
+      ctx.lineWidth = d === 5 ? 1.5 : 1;
+      ctx.setLineDash(d === 5 ? [] : [4,6]); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = 'rgba(90,106,138,0.6)';
+      ctx.font = '16px "JetBrains Mono",monospace';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(d+'°', CX, CY - r + 14);
+    }
+
+    // Grid
+    ctx.strokeStyle = 'rgba(26,39,68,0.5)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(CX,CY-270); ctx.lineTo(CX,CY+270); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(CX-270,CY); ctx.lineTo(CX+270,CY); ctx.stroke();
+
+    // Polaris
+    const pg = ctx.createRadialGradient(CX,CY,0,CX,CY,18);
+    pg.addColorStop(0,'rgba(255,224,102,0.8)'); pg.addColorStop(0.5,'rgba(255,224,102,0.15)'); pg.addColorStop(1,'rgba(255,224,102,0)');
+    ctx.fillStyle = pg; ctx.beginPath(); ctx.arc(CX,CY,18,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#ffe066'; ctx.beginPath(); ctx.arc(CX,CY,4,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle = 'rgba(255,224,102,0.7)'; ctx.font = '500 14px "Orbitron",sans-serif';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText('POLARIS', CX+12, CY-10);
+
+    // Crosshair position
+    let azErr = smoothAlpha; if (azErr > 180) azErr -= 360;
+    let altErr = smoothBeta - targetAlt;
+    const cx = CX + clamp(azErr * sc, -250, 250);
+    const cy = CY + clamp(-altErr * sc, -250, 250);
+    const totErr = Math.sqrt(azErr*azErr + altErr*altErr);
+
+    const cc = totErr < 1 ? '#00ff88' : totErr < 5 ? '#ffaa00' : '#ff4444';
+    const cg = ctx.createRadialGradient(cx,cy,0,cx,cy,30);
+    cg.addColorStop(0, cc+'40'); cg.addColorStop(1, cc+'00');
+    ctx.fillStyle = cg; ctx.beginPath(); ctx.arc(cx,cy,30,0,Math.PI*2); ctx.fill();
+
+    ctx.strokeStyle = cc; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(cx,cy-18); ctx.lineTo(cx,cy-6); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx,cy+6); ctx.lineTo(cx,cy+18); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx-18,cy); ctx.lineTo(cx-6,cy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx+6,cy); ctx.lineTo(cx+18,cy); ctx.stroke();
+    ctx.fillStyle = cc; ctx.beginPath(); ctx.arc(cx,cy,3,0,Math.PI*2); ctx.fill();
+
+    // Cardinals
+    ctx.fillStyle = 'rgba(0,229,255,0.5)'; ctx.font = '500 16px "Orbitron",sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('N',CX,CY-260); ctx.fillText('S',CX,CY+260);
+    ctx.fillText('E',CX+260,CY); ctx.fillText('W',CX-260,CY);
+
+    // Border
+    ctx.beginPath(); ctx.arc(CX,CY,275,0,Math.PI*2);
+    ctx.strokeStyle = 'rgba(42,74,122,0.5)'; ctx.lineWidth = 2; ctx.stroke();
+
+    updateUI(azErr, altErr, totErr);
+    requestAnimationFrame(draw);
+  }
+
+  function updateUI(azErr, altErr, totErr) {
+    const st = document.getElementById('statusText');
+    const ed = document.getElementById('errorDeg');
+    const dh = document.getElementById('dirHint');
+    const sb = document.getElementById('statusBar');
+
+    if (!sensorActive) { st.textContent = 'WAITING FOR SENSORS'; ed.textContent = '--°'; return; }
+
+    ed.textContent = totErr.toFixed(2) + '°';
+    if (totErr < 0.5) { st.textContent = '◉ ALIGNED'; st.style.color = ed.style.color = '#00ff88'; sb.style.borderColor = 'rgba(0,255,136,0.3)'; }
+    else if (totErr < 2) { st.textContent = '◎ NEARLY THERE'; st.style.color = ed.style.color = '#ffaa00'; sb.style.borderColor = 'rgba(255,170,0,0.3)'; }
+    else if (totErr < 5) { st.textContent = '○ ADJUSTING'; st.style.color = ed.style.color = '#ff8844'; sb.style.borderColor = 'rgba(255,136,68,0.2)'; }
+    else { st.textContent = '✕ OFF TARGET'; st.style.color = ed.style.color = '#ff4444'; sb.style.borderColor = 'rgba(255,68,68,0.2)'; }
+
+    let h = [];
+    if (Math.abs(altErr) > 0.5) h.push(altErr > 0 ? '↑ Raise altitude' : '↓ Lower altitude');
+    if (Math.abs(azErr) > 0.5) h.push(azErr > 0 ? '← Rotate Left' : '→ Rotate Right');
+    dh.textContent = h.length ? h.join('  •  ') : 'Hold steady — aligned!';
+
+    updateBubble('bubbleX','valX', smoothBeta);
+    updateBubble('bubbleY','valY', smoothGamma);
+    updateBubble('bubbleZ','valZ', smoothAlpha > 180 ? smoothAlpha-360 : smoothAlpha);
+
+    document.getElementById('headingVal').textContent = smoothAlpha.toFixed(1)+'°';
+    document.getElementById('cardinalDir').textContent = getCardinal(smoothAlpha);
+    document.getElementById('targetHeading').textContent = 'Alt ' + getTargetAltitude().toFixed(1) + '°';
+    document.getElementById('rawA').textContent = (alpha||0).toFixed(1);
+    document.getElementById('rawB').textContent = (beta||0).toFixed(1);
+    document.getElementById('rawG').textContent = (gamma||0).toFixed(1);
+    document.getElementById('sensorSrc').textContent = 'SENSOR: ' + sensorSource + ' | events: ' + eventCount;
+  }
+
+  function updateBubble(bid, vid, deg) {
+    const b = document.getElementById(bid), v = document.getElementById(vid);
+    const cw = b.parentElement.offsetWidth || 100;
+    b.style.left = (clamp((deg+45)/90, 0, 1) * (cw-18)) + 'px';
+    const a = Math.abs(deg), c = a < 1 ? '#00ff88' : a < 5 ? '#ffaa00' : '#ff4444';
+    b.style.background = c; v.style.color = c; v.textContent = deg.toFixed(1)+'°';
+  }
+
+  // ── Auto-start ──
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  if (!isIOS) {
+    log('Non-iOS: auto-starting sensors in 300ms...');
+    setTimeout(initSensors, 300);
+  } else {
+    log('iOS detected: tap "Enable Sensors" to begin');
+  }
+
+  requestAnimationFrame(draw);
+</script>
+</body>
+</html>
