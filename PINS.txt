@@ -2,9 +2,7 @@ P.I.N.S Instllation for Raspberry
 
 Download and install : https://cloud.astro-narren.de/s/piDjPcf8K7TDQfq
 
-PINS works smothely out of the box as long as you have internet and things get to go little weierd when you go to the field and start to have issues with time sync.
-Also notices few decade old DSLRs are not getting detected even though indi related plugins are installed.
-Rather we will take a systematic approach to configure the system, so that the system detects devices that it supposed to be..
+While PINS works perfectly out of the box with an internet connection, offline field use often leads to time synchronization issues. Furthermore, some older DSLRs fail to be recognized even with the correct INDI drivers installed. Instead of relying on defaults, we will take a systematic approach to configure the OS to ensure robust and consistent device detection.
 
 URL to access PINS without TouchnStars app
 
