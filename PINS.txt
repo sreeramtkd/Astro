@@ -1,0 +1,77 @@
+P.I.N.S Instllation for Raspberry
+
+Download and install : https://cloud.astro-narren.de/s/piDjPcf8K7TDQfq
+
+PINS works smothely out of the box as long as you have internet and things get to go little weierd when you go to the field and start to have issues with time sync.
+Also notices few decade old DSLRs are not getting detected even though indi related plugins are installed.
+Rather we will take a systematic approach to configure the system, so that the system detects devices that it supposed to be..
+
+URL to access PINS without TouchnStars app
+
+webUI: <pinsip>:5000
+SSH: pi / pins
+Wifi - pinsxxxx touchnstars
+
+Setting —> Plugin Management  —> Enable pins
+Go to pins icon and update wifi & configure home network
+Go to pins Services and enable Samba Share
+
+sudo raspi-config 
+	Interface option --> Disable VNC (this will claim more than 50% of RAM) & you never need VNC to remote to Raspberry pi
+	Interface option --> Enable I2C for connecting RTC Module
+	Localization --> TimeZone --> Select the appropriate timezone (Asia, Kolkata), by default it will pull the factory settings, causing logs and other things to be outof sync
+	WLAN Country --> Asia,IN
+	
+	DO NOT REBOOT NOW
+
+sudo apt-get update
+sudo apt-get upgrade
+sudo apt-get install gphoto2
+sudo apt install util-linux-extra
+sudo apt-get install i2c-tools
+pip install sh --break-system-packages
+
+Go to Plugin Management and enable required plugins
+	FileBrowser
+	BhatiFocus
+	livestack (RPI5 8gb variant recommended)
+	ObservationPlaner
+	Sequence Creator
+	system monitor
+
+sudo apt full-upgrade
+sudo apt autoremove
+sudo reboot
+
+RTC Installation: | connect RTC device to I2c Pins GPIO2 / GPIO3
+	sudo nano /boot/firmware/config.txt 
+	add the below line towards end of the file and save and reboot # DS3231 or DS1307, check from product description. 
+		dtoverlay=i2c-rtc,ds3231
+	sudo reboot
+	run sudo i2cdetect -y 1   #if you see I2C address you are good to go, else troubleshoot accordingly
+	
+	Installing RTC as service, download this file from github https://raw.githubusercontent.com/sreeramtkd/Astro/refs/heads/main/rtc_sync.py
+		sudo cp rtc_clock.py /usr/local/bin/rtc_sync.py
+	
+Edit & install services:
+		sudo nano /etc/systemd/system/rtc-sync.service
+
+			[Unit]
+	   	 	Description=Custom RTC and Internet Time Sync
+	   	 	After=network.target
+
+	   	 	[Service]
+	   	 	Type=oneshot
+	   	 	ExecStart=/usr/bin/python3 /usr/local/bin/rtc_sync.py
+	   	 	StandardOutput=journal
+	   	 	StandardError=journal
+
+	   	 	[Install]
+	   	 	WantedBy=multi-user.target
+
+Save and exit the file and install the services:
+		sudo systemctl daemon-reload
+		sudo systemctl enable rtc-sync.service
+		sudo systemctl start rtc-sync.service
+
+Finally to check if services is running Run : sudo journalctl -u rtc-sync.service | The RTC should be able to set the time on every boot and update itself once internet is connected.
