@@ -15,6 +15,7 @@ Go to pins icon and update wifi & configure home network
 Go to pins Services and enable Samba Share
 
 sudo raspi-config 
+	System Option --> Boot --> Console Text Console
 	Interface option --> Disable VNC (this will claim more than 50% of RAM) & you never need VNC to remote to Raspberry pi
 	Interface option --> Enable I2C for connecting RTC Module
 	Localization --> TimeZone --> Select the appropriate timezone (Asia, Kolkata), by default it will pull the factory settings, causing logs and other things to be outof sync
