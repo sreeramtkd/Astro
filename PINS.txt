@@ -50,7 +50,7 @@ RTC Installation: | connect RTC device to I2c Pins GPIO2 / GPIO3
 	run sudo i2cdetect -y 1   #if you see I2C address you are good to go, else troubleshoot accordingly
 	
 	Installing RTC as service, download this file from github https://raw.githubusercontent.com/sreeramtkd/Astro/refs/heads/main/rtc_sync.py
-		sudo cp rtc_clock.py /usr/local/bin/rtc_sync.py
+		sudo cp rtc_sync.py /usr/local/bin/rtc_sync.py
 	
 Edit & install services:
 		sudo nano /etc/systemd/system/rtc-sync.service
