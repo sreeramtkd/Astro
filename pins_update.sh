@@ -27,6 +27,7 @@ echo "Starting PINS automated configuration..."
 raspi-config nonint do_i2c 0
 raspi-config nonint do_wifi_country IN
 timedatectl set-timezone Asia/Kolkata
+sudo timedatectl set-ntp true
 check_status "System Configuration"
 
 # 2. Update and Install Dependencies
